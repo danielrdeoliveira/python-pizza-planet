@@ -57,7 +57,6 @@ def test_create(app, ingredients, beverages, size, client_data):
 def test_calculate_order_price(app, order: dict):
     created_order, _ = OrderController.create(order)
     created_size = created_order['size']
-    created_items = created_order['detail']
     size_price = created_size['price']
     beverages_in_detail = [item['beverage'] for item in created_order['detail'] if item['beverage']]
     beverages_price = sum([beverage['price'] for beverage in beverages_in_detail])
