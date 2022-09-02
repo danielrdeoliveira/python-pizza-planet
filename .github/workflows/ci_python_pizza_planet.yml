@@ -29,7 +29,7 @@ jobs:
 
     - name: Running Linter
       run: |
-        flake8 --show-source --ignore=W605
+        flake8 --show-source --ignore=W605,F401 --max-line-length=160
       working-directory: ${{env.WORK_DIR}}
 
     - name: Test + Coverage
