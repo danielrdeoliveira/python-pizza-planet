@@ -30,7 +30,7 @@ jobs:
     - name: Running Linter
       run: |
         flake8 --show-source --ignore=W605
-      working-directory: $WORK_DIR
+      working-directory: ${env.WORK_DIR}
 
     - name: Test + Coverage
       run: |
