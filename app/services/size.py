@@ -8,20 +8,24 @@ size = Blueprint('size', __name__)
 
 
 @size.route('/', methods=POST)
+@service_handler()
 def create_size():
-    return service_handler(SizeController.create(request.json))
+    return SizeController.create(request.json)
 
 
 @size.route('/', methods=PUT)
+@service_handler()
 def update_size():
-    return service_handler(SizeController.update(request.json))
+    return SizeController.update(request.json)
 
 
 @size.route('/id/<_id>', methods=GET)
+@service_handler()
 def get_size_by_id(_id: int):
-    return service_handler(SizeController.get_by_id(_id))
+    return SizeController.get_by_id(_id)
 
 
 @size.route('/', methods=GET)
+@service_handler()
 def get_all_sizes():
-    return service_handler(SizeController.get_all())
+    return SizeController.get_all()

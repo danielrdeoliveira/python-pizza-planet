@@ -9,20 +9,24 @@ ingredient = Blueprint('ingredient', __name__)
 
 
 @ingredient.route('/', methods=POST)
+@service_handler()
 def create_ingredient():
-    return service_handler(IngredientController.create(request.json))
+    return IngredientController.create(request.json)
 
 
 @ingredient.route('/', methods=PUT)
+@service_handler()
 def update_ingredient():
-    return service_handler(IngredientController.update(request.json))
+    return IngredientController.update(request.json)
 
 
 @ingredient.route('/id/<_id>', methods=GET)
+@service_handler()
 def get_ingredient_by_id(_id: int):
-    return service_handler(IngredientController.get_by_id(_id))
+    return IngredientController.get_by_id(_id)
 
 
 @ingredient.route('/', methods=GET)
+@service_handler()
 def get_ingredients():
-    return service_handler(IngredientController.get_all())
+    return IngredientController.get_all()
