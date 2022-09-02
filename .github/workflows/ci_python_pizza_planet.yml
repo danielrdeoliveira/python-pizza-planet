@@ -27,6 +27,11 @@ jobs:
        python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Running Linter
+      run: |
+        flake8 --show-source --ignore=W605
+      working-directory: $WORK_DIR
+
     - name: Test + Coverage
       run: |
         pytest --cov-report term --cov=$WORK_DIR
