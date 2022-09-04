@@ -142,4 +142,3 @@ def test_get_top_month(order: dict):
     top_calc_months = [key for key, value in month_count.items() if value == max(month_count.values())]
 
     assert int(top_month[0]['month'][0:2]) in top_calc_months
-0

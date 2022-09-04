@@ -7,7 +7,7 @@ def test_get_top_ingredient(client_data, create_size, create_beverages, create_i
     ingredients = [ingredient.get('_id') for ingredient in create_ingredients]
     beverages = [beverage.get('_id') for beverage in create_beverages]
     size_id = create_size.json['_id']
-    ingredients_count = [0]*10
+    ingredients_count = [0] * 10
     for _ in range(60):
         shuffled_ingredients = shuffle_list(ingredients)[0:3]
         order = {
@@ -18,7 +18,7 @@ def test_get_top_ingredient(client_data, create_size, create_beverages, create_i
         }
         created_order, _ = OrderController.create(order)
         for ing in shuffled_ingredients:
-            ingredients_count[ing-1] += 1
+            ingredients_count[ing - 1] += 1
     top_ingredient = OrderDetailController.get_top_ingredient()
 
     calc_top_ingredients = []

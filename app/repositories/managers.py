@@ -111,8 +111,8 @@ class OrderManager(BaseManager):
     def get_top_month(cls):
         top_months = cls.session.query(
             func.strftime('%m-%Y', cls.model.date).label('month'),
-            func.sum(cls.model.total_price).label("revenue")
-            ).group_by('month').order_by(desc("revenue")).limit(3).all()
+            func.sum(cls.model.total_price).label("revenue"))\
+            .group_by('month').order_by(desc("revenue")).limit(3).all()
         result = []
         for mon in top_months:
             result.append(
