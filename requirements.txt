@@ -2,12 +2,14 @@ alembic==1.7.5
 attrs==21.4.0
 autopep8==1.6.0
 click==8.0.3
+faker==14.1.0
 flake8==4.0.1
 Flask==2.0.2
 Flask-Cors==3.0.10
 flask-marshmallow==0.14.0
 Flask-Migrate==3.1.0
 Flask-Script==2.0.6
+Flask-Seeder==1.0.0
 Flask-SQLAlchemy==2.5.1
 greenlet==1.1.2
 importlib-metadata==4.10.1

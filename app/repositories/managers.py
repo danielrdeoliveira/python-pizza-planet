@@ -3,7 +3,7 @@ from typing import Any, List, Optional, Sequence
 from sqlalchemy.sql import text, column, func, desc
 
 from .models import Ingredient, Order, OrderDetail, Size, Beverage, db
-from .serializers import (IngredientSerializer, OrderSerializer,
+from .serializers import (IngredientSerializer, OrderSerializer, OrderDetailSerializer,
                           SizeSerializer, BeverageSerializer, ma)
 
 
@@ -72,16 +72,52 @@ class OrderManager(BaseManager):
         cls.session.add(new_order)
         cls.session.flush()
         cls.session.refresh(new_order)
-        cls.session.add_all((OrderDetail(order_id=new_order._id, ingredient_id=ingredient._id, ingredient_price=ingredient.price)
-                             for ingredient in ingredients))
-        cls.session.add_all((OrderDetail(order_id=new_order._id, beverage_id=beverage._id)
-                             for beverage in beverages))
+
+        ingredients_detail = (
+            OrderDetail(
+                order_id=new_order._id,
+                ingredient_id=ingredient._id,
+                ingredient_price=ingredient.price)
+            for ingredient in ingredients)
+        beverages_detail = (
+            OrderDetail(
+                order_id=new_order._id,
+                beverage_id=beverage._id,
+                beverage_price=beverage.price)
+            for beverage in beverages)
+
+        cls.session.add_all(ingredients_detail)
+        cls.session.add_all(beverages_detail)
         cls.session.commit()
         return cls.serializer().dump(new_order)
 
     @classmethod
     def update(cls):
         raise NotImplementedError(f'Method not supported for {cls.__name__}')
+
+    @classmethod
+    def get_top_customers(cls):
+        customers_query = cls.session.query(
+            func.count(cls.model._id).label('num_orders'),
+            cls.model.client_name
+        ).group_by(cls.model.client_name).order_by(desc('num_orders')).limit(3).all()
+        top_customers = []
+        for customer in customers_query:
+            top_customers.append(
+                {'client_name': customer.client_name, 'num_orders': customer.num_orders})
+        return top_customers
+
+    @classmethod
+    def get_top_month(cls):
+        top_months = cls.session.query(
+            func.strftime('%m-%Y', cls.model.date).label('month'),
+            func.sum(cls.model.total_price).label("revenue")
+            ).group_by('month').order_by(desc("revenue")).limit(3).all()
+        result = []
+        for mon in top_months:
+            result.append(
+                {'month': mon.month, 'revenue': mon.revenue})
+        return result
 
 
 class IndexManager(BaseManager):
@@ -91,60 +127,20 @@ class IndexManager(BaseManager):
         cls.session.query(column('1')).from_statement(text('SELECT 1')).all()
 
 
-class ReportManager(BaseManager):
-    order = Order
-    order_detail = OrderDetail
-    ingredient = Ingredient
+class OrderDetailManager(BaseManager):
+    model = OrderDetail
+    serializer = OrderDetailSerializer
 
     @classmethod
-    def get_customer_report(cls):
-        return {
-            'best_customers': cls.get_best_customers_list(),
-        }
+    def get_top_ingredient(cls):
+        top_ingredients = cls.session.query(
+            func.count(cls.model.ingredient_id).label('request_count'),
+            Ingredient.name
+        ).join(Ingredient).\
+            group_by(cls.model.ingredient_id).order_by(desc('request_count')).limit(3)
 
-    @classmethod
-    def get_all_report(cls):
-        return {
-            'best_customers': cls.get_best_customers_list(),
-            'most_requested_ingredient': cls.get_most_requested_ingredients(),
-            'date_with_most_revenue': cls.get_date_with_most_revenue()
-        }
-
-    @classmethod
-    def get_report(cls, func):
-        report = func()
-        return report
-
-    @classmethod
-    def get_best_customers_list(cls):
-        best_customers = []
-        customers = cls.session.query(cls.order.client_name, func.count(cls.order.client_dni).label(
-            'times')).group_by(cls.order.client_dni).order_by(desc('times')).limit(3).all()
-        for customer in customers:
-            best_customers.append(
-                {'client_name': customer.client_name, 'times': customer.times})
-        return best_customers
-
-    @classmethod
-    def get_most_requested_ingredients(cls):
-        most_requested_ingredients = []
-        ingredients = cls.session.query(cls.ingredient.name,
-                                        func.count(cls.order_detail.ingredient_id).label('times')).join(
-            cls.ingredient, cls.order_detail.ingredient_id == cls.ingredient._id).group_by(
-            cls.order_detail.ingredient_id).order_by(desc('times')).limit(1).all()
-        for ingredient in ingredients:
-            most_requested_ingredients.append(
-                {'name': ingredient.name, 'times': ingredient.times})
-        return most_requested_ingredients
-
-    @classmethod
-    def get_date_with_most_revenue(cls):
-        date_with_most_revenue = []
-        revenues = cls.session.query(func.strftime('%Y', cls.order.date).label('year'),
-                                     func.strftime('%m', cls.order.date).label(
-                                         'month'), func.sum(cls.order.total_price).label('total_sales')).group_by(
-            'year', 'month').order_by(desc('total_sales')).limit(1).all()
-        for revenue in revenues:
-            date_with_most_revenue.append(
-                {'year': revenue.year, 'month': revenue.month, 'total_sales': revenue.total_sales})
-        return date_with_most_revenue
+        result = []
+        for ingredient in top_ingredients:
+            result.append(
+                {'request_count': ingredient.request_count, 'name': ingredient.name})
+        return result

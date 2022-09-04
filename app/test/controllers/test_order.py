@@ -1,8 +1,11 @@
 import pytest
+from random import randint
+from datetime import datetime
+
 from app.controllers import (IngredientController, OrderController,
                              SizeController, BeverageController)
 from app.controllers.base import BaseController
-from app.test.utils.functions import get_random_choice, shuffle_list
+from app.test.utils.functions import get_random_choice
 
 
 def __order(ingredients: list, beverages: list, size: dict, client_data: dict):
@@ -97,3 +100,46 @@ def test_get_all(app, order: dict):
         assert current_id in searchable_orders
         for param, value in created_order.items():
             pytest.assume(searchable_orders[current_id][param] == value)
+
+
+def test_get_top_customer(clients_data, create_size, create_beverages, create_ingredients):
+
+    ingredients = [ingredient.get('_id') for ingredient in create_ingredients]
+    beverages = [beverage.get('_id') for beverage in create_beverages]
+    size_id = create_size.json['_id']
+    clients_count = {}
+    for client in clients_data:
+        clients_count.update({client['client_name']: 0})
+    for _ in range(60):
+        client = get_random_choice(clients_data)
+        clients_count[client['client_name']] += 1
+
+        order = {
+            **client,
+            'ingredients': ingredients,
+            'beverages': beverages,
+            'size_id': size_id
+        }
+        created_order, _ = OrderController.create(order)
+
+    top_customers = OrderController.get_top_customers()
+    top_clients = [key for key, value in clients_count.items() if value == max(clients_count.values())]
+
+    assert top_customers[0]['client_name'] in top_clients
+
+
+def test_get_top_month(order: dict):
+    month_count = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0}
+    for _ in range(30):
+        rand_date = datetime(2022, randint(1, 12), 1)
+        order_with_date = order | {
+            'date': rand_date
+        }
+        month_count[rand_date.month] += 1
+        created_order, _ = OrderController.create(order_with_date)
+    top_month = OrderController.get_top_month()
+
+    top_calc_months = [key for key, value in month_count.items() if value == max(month_count.values())]
+
+    assert int(top_month[0]['month'][0:2]) in top_calc_months
+0
